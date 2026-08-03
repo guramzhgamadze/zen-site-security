@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zen Site Security – HTTPS, headers and hardening for WordPress</title>
+<meta name="description" content="A WordPress plugin that activates SSL in one click, keeps the site on HTTPS, monitors the certificate, and adds security headers, a strict CSP and attack-surface hardening.">
+<link rel="canonical" href="https://guramzhgamadze.github.io/zen-site-security/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Zen Site Security – HTTPS, headers and hardening for WordPress">
+<meta property="og:description" content="Activate SSL in one click, then harden what sits behind it: security headers, a strict CSP with script nonces, SameSite cookies and attack-surface reduction.">
+<meta property="og:url" content="https://guramzhgamadze.github.io/zen-site-security/">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔒</text></svg>">
+<style>
+  :root{
+    --bg:#ffffff; --bg-soft:#f6f7f9; --bg-card:#ffffff;
+    --fg:#16181d; --fg-soft:#585f6b; --fg-faint:#848b97;
+    --line:#e3e6ea; --accent:#1a7f4b; --accent-soft:#e7f4ec;
+    --good:#1a7f4b; --warn:#9a6b00;
+    --radius:14px;
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#0e1015; --bg-soft:#151922; --bg-card:#161a23;
+      --fg:#e9ecf1; --fg-soft:#a6aebc; --fg-faint:#727b8a;
+      --line:#252b36; --accent:#4ec98a; --accent-soft:#152620;
+      --good:#4ec98a; --warn:#e0b350;
+    }
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--fg);
+    font-family:var(--sans); font-size:17px; line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:900px; margin:0 auto; padding:0 24px}
+  a{color:var(--accent); text-decoration:none}
+  a:hover{text-decoration:underline}
+  code{
+    font-family:var(--mono); font-size:.87em;
+    background:var(--bg-soft); border:1px solid var(--line);
+    border-radius:5px; padding:.12em .38em;
+  }
+  h1,h2,h3{line-height:1.25; letter-spacing:-.02em; margin:0}
+
+  /* ---- header ---- */
+  header{padding:76px 0 56px; border-bottom:1px solid var(--line)}
+  .eyebrow{
+    display:inline-block; font-size:12px; font-weight:600; letter-spacing:.09em;
+    text-transform:uppercase; color:var(--accent);
+    background:var(--accent-soft); border-radius:100px; padding:5px 13px;
+    margin-bottom:22px;
+  }
+  h1{font-size:clamp(32px,5.5vw,46px); font-weight:680; margin-bottom:18px}
+  .lede{font-size:clamp(17px,2.4vw,20px); color:var(--fg-soft); max-width:64ch; margin:0}
+  .meta{
+    margin-top:30px; display:flex; flex-wrap:wrap; gap:8px 10px;
+    font-size:13px; color:var(--fg-faint);
+  }
+  .pill{border:1px solid var(--line); border-radius:100px; padding:4px 12px; background:var(--bg-soft)}
+  .cta{margin-top:32px; display:flex; flex-wrap:wrap; gap:12px}
+  .btn{
+    display:inline-block; padding:11px 20px; border-radius:10px; font-weight:600; font-size:15px;
+    border:1px solid var(--line); background:var(--bg-soft); color:var(--fg);
+  }
+  .btn:hover{text-decoration:none; border-color:var(--fg-faint)}
+  .btn-primary{background:var(--accent); border-color:var(--accent); color:#fff}
+  .btn-primary:hover{filter:brightness(1.08); border-color:var(--accent)}
+  @media (prefers-color-scheme:dark){ .btn-primary{color:#0e1015} }
+
+  /* ---- sections ---- */
+  section{padding:56px 0; border-bottom:1px solid var(--line)}
+  section:last-of-type{border-bottom:0}
+  h2{font-size:clamp(22px,3.4vw,28px); font-weight:660; margin-bottom:10px}
+  .sub{color:var(--fg-soft); max-width:66ch; margin:0 0 30px}
+
+  .grid{display:grid; gap:16px; grid-template-columns:repeat(auto-fit,minmax(268px,1fr))}
+  .card{
+    background:var(--bg-card); border:1px solid var(--line);
+    border-radius:var(--radius); padding:22px 22px 24px;
+  }
+  .card h3{font-size:16.5px; font-weight:650; margin-bottom:8px; display:flex; gap:9px; align-items:baseline}
+  .card h3 .ic{font-size:15px; opacity:.85}
+  .card p{margin:0; color:var(--fg-soft); font-size:15px; line-height:1.6}
+
+  ul.clean{margin:0; padding-left:1.15em; color:var(--fg-soft)}
+  ul.clean li{margin:.42em 0}
+  ul.clean strong{color:var(--fg); font-weight:620}
+
+  .note{
+    background:var(--bg-soft); border:1px solid var(--line);
+    border-left:3px solid var(--accent);
+    border-radius:0 var(--radius) var(--radius) 0;
+    padding:18px 22px; color:var(--fg-soft); font-size:15px;
+  }
+  .note strong{color:var(--fg)}
+  .note code{background:var(--bg-card)}
+
+  table{width:100%; border-collapse:collapse; font-size:15px}
+  .scroll{overflow-x:auto; -webkit-overflow-scrolling:touch}
+  th,td{text-align:left; padding:11px 14px; border-bottom:1px solid var(--line); vertical-align:top}
+  th{font-size:12.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--fg-faint); font-weight:600}
+  td:first-child{white-space:nowrap; font-weight:600}
+  td.d{color:var(--fg-soft); font-weight:400; white-space:normal}
+
+  footer{padding:44px 0 60px; color:var(--fg-faint); font-size:14.5px}
+  footer a{color:var(--fg-soft)}
+  .fam{margin-top:14px; display:flex; flex-wrap:wrap; gap:6px 16px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <span class="eyebrow">WordPress plugin</span>
+    <h1>Zen Site Security — HTTPS, headers&nbsp;and hardening</h1>
+    <p class="lede">
+      Getting a certificate is the easy part. Migrating WordPress onto it without breaking the
+      site, keeping it there, noticing before it expires, and hardening what sits behind it — that
+      is the work. Zen Site Security does all of it, and refuses to activate until a valid
+      certificate is genuinely installed, so you cannot lock yourself out by accident.
+    </p>
+    <div class="meta">
+      <span class="pill">Version 1.13.1</span>
+      <span class="pill">WordPress 6.5+</span>
+      <span class="pill">PHP 8.0+</span>
+      <span class="pill">GPL-2.0-or-later</span>
+      <span class="pill">No external requests</span>
+    </div>
+    <div class="cta">
+      <a class="btn btn-primary" href="https://wordpress.org/plugins/zen-site-security/">Get it on WordPress.org</a>
+      <a class="btn" href="https://github.com/guramzhgamadze/zen-site-security#readme">Read the documentation</a>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <h2>One click to HTTPS — and a way back</h2>
+    <p class="sub">
+      Activation verifies the certificate first, then switches your site and home URLs to https,
+      301-redirects every HTTP request, and rewrites mixed content on the fly.
+    </p>
+    <div class="grid">
+      <div class="card">
+        <h3><span class="ic">✓</span>It checks before it switches</h3>
+        <p>The certificate is probed directly and parsed — issuer, expiry, and whether it actually
+        covers your domain, wildcards included. Activation is blocked until a valid certificate is
+        found, because the failure mode of getting this wrong is an unreachable site.</p>
+      </div>
+      <div class="card">
+        <h3><span class="ic">↪</span>Redirects, your way</h3>
+        <p>A PHP 301 redirect by default — works on every server and disappears the moment the
+        plugin is deactivated. Optional <code>.htaccess</code> rules for Apache and LiteSpeed,
+        written above the WordPress block in marked, removable blocks. On nginx you get the exact
+        server snippet to paste.</p>
+      </div>
+      <div class="card">
+        <h3><span class="ic">⚭</span>Mixed content, fixed</h3>
+        <p>Insecure references to your own site — including www and non-www variants and
+        JSON-escaped URLs — are rewritten just before the page is sent. Feeds, sitemaps and JSON
+        responses are left alone. An opt-in fixer covers wp-admin too.</p>
+      </div>
+      <div class="card">
+        <h3><span class="ic">⏱</span>It tells you before it expires</h3>
+        <p>A daily background check re-probes the certificate independently of admin visits and
+        emails you when fewer than 15 days remain — so an expiring certificate is caught even if
+        nobody logs in that week.</p>
+      </div>
+      <div class="card">
+        <h3><span class="ic">◈</span>A TLS grade, not just a tick</h3>
+        <p>A letter grade with specific findings for the negotiated protocol, key strength,
+        signature algorithm, cipher and chain — shown on the settings page and the Dashboard
+        widget, with a link out to SSL Labs for a full protocol audit.</p>
+      </div>
+      <div class="card">
+        <h3><span class="ic">⚑</span>An escape hatch that always works</h3>
+        <p>One line in <code>wp-config.php</code> — <code>define( 'ZENSS_DISABLE_SSL', true );</code>
+        — reverts the URLs to http, disables the redirect and strips the .htaccess rules on the
+        very next request. No admin access required.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Then harden what sits behind it</h2>
+    <p class="sub">Every hardening control is opt-in, and every header stands down automatically if
+    another plugin already sends it.</p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Control</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Security headers</td>
+            <td class="d"><code>X-Content-Type-Options</code>, <code>X-Frame-Options</code>,
+            <code>Referrer-Policy</code>, a conservative <code>Permissions-Policy</code> and CSP
+            <code>upgrade-insecure-requests</code>. Optionally written into <code>.htaccess</code>
+            so static files and non-WordPress responses are covered too.</td>
+          </tr>
+          <tr>
+            <td>Strict CSP</td>
+            <td class="d">An advanced, opt-in Content-Security-Policy that stamps a per-request
+            nonce on WordPress-rendered scripts and ships <code>'strict-dynamic'</code>.
+            Report-Only by default, with a violations panel and a one-click <em>Allow</em> button
+            for each source you recognise.</td>
+          </tr>
+          <tr>
+            <td>HSTS</td>
+            <td class="d">Opt-in <code>Strict-Transport-Security</code>, starting at a one-day
+            max-age for safe testing. The preload-eligible configuration needs an explicit second
+            opt-in, because it is hard to undo.</td>
+          </tr>
+          <tr>
+            <td>SameSite cookies</td>
+            <td class="d">WordPress auth cookies are re-issued with an explicit
+            <code>SameSite=Lax</code> attribute, so CSRF protection no longer depends on browser
+            defaults — a second layer beside nonces.</td>
+          </tr>
+          <tr>
+            <td>Cache deception defence</td>
+            <td class="d">Logged-in pages and authenticated REST responses are marked
+            <code>no-store, private</code>, and a dynamic response is never allowed to be cached
+            under a static-looking URL — the origin-side defence OWASP recommends.</td>
+          </tr>
+          <tr>
+            <td>Attack-surface reduction</td>
+            <td class="d">Disable the wp-admin file editors, block PHP execution in uploads (an
+            uploaded webshell becomes a dead file), deny web access to logs, dumps, backups and
+            wp-config variants, turn off directory listings and XML-RPC, and hide the WordPress
+            version and <code>X-Powered-By</code>.</td>
+          </tr>
+          <tr>
+            <td>security.txt</td>
+            <td class="d">Optional RFC 9116 disclosure file served on the fly at
+            <code>/.well-known/security.txt</code> — nothing written to disk, so it never clashes
+            with Let's Encrypt challenges.</td>
+          </tr>
+          <tr>
+            <td>Score &amp; Site Health</td>
+            <td class="d">A Dashboard security score with your top recommended next steps and a
+            one-click "enable recommended protections", plus the same posture surfaced as tests
+            under Tools&nbsp;→&nbsp;Site Health. One engine drives both, so they always agree.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Built to pair with Zen Login &amp; Authentication</h2>
+    <p class="sub">
+      Each plugin is fully standalone, but together they split the work with exactly one owner per
+      control — so nothing is enforced twice and nothing falls between them.
+    </p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th></th><th>Zen Login &amp; Authentication</th><th>Zen Site Security</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Scope</td>
+            <td class="d">Identity &amp; authentication</td>
+            <td class="d">Transport &amp; platform</td>
+          </tr>
+          <tr>
+            <td>Owns</td>
+            <td class="d">Login and registration forms, rate limiting, two-factor, passkeys,
+            breached-password checks, sessions, user enumeration, XML-RPC, auth-page headers</td>
+            <td class="d">HTTPS migration and redirects, mixed content, certificate monitoring,
+            HSTS, site-wide security headers, SameSite cookies, file editors, PHP-in-uploads,
+            sensitive files, directory listings, version disclosure</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="sub" style="margin-top:24px; margin-bottom:0">
+      When both are active, this plugin's XML-RPC switch stands down in favour of its sibling, and
+      its site-wide headers skip anything the sibling already sent.
+    </p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Honest limits</h2>
+    <p class="sub">Security plugins are the easiest category in which to overpromise. To be clear
+    about what this does not do:</p>
+    <ul class="clean">
+      <li><strong>It does not issue certificates.</strong> Your host does that — most offer free
+      Let's Encrypt certificates in their control panel. This plugin detects the certificate and
+      migrates WordPress onto it.</li>
+      <li><strong>It cannot patch a vulnerability in another plugin.</strong> Nothing can. What it
+      does is defence in depth: headers that make XSS harder to exploit, SameSite cookies that
+      blunt CSRF, and hardening that turns many exploit paths into dead ends.</li>
+      <li><strong>There is no regex "firewall".</strong> Pattern-matching request filters that
+      claim to block SQL injection or XSS are bypass-prone, break real sites, and are not built
+      here on purpose.</li>
+      <li><strong>Version 1.x targets single-site installs.</strong> Multisite support is
+      planned.</li>
+    </ul>
+    <div class="note" style="margin-top:26px">
+      <strong>Deactivating the plugin does not push you back to http.</strong> The .htaccess rules
+      are removed and the PHP redirect stops, but your site URLs deliberately stay on https —
+      turning off a plugin should never downgrade a working secure site. Use <em>Revert site to
+      HTTP</em> on the settings page if that is genuinely what you want.
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p style="margin:0">
+      Built by <a href="https://github.com/guramzhgamadze">Guram Zhgamadze</a> ·
+      <a href="https://github.com/guramzhgamadze/zen-site-security#readme">Documentation</a> ·
+      <a href="https://wordpress.org/plugins/zen-site-security/">WordPress.org</a> ·
+      Released under GPL-2.0-or-later
+    </p>
+    <div class="fam">
+      <a href="https://github.com/guramzhgamadze/zen-login-authentication">Zen Login &amp; Authentication</a>
+      <a href="https://github.com/guramzhgamadze/zen-mcp-bridge">Zen MCP Bridge</a>
+      <a href="https://github.com/guramzhgamadze/zen-geo">Zen GEO</a>
+      <a href="https://github.com/guramzhgamadze/zen-blogger">Zen Blogger</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
