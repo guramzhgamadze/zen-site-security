@@ -10,7 +10,7 @@ it expires, and hardening the platform behind it is the work this plugin does.
 - **WordPress.org:** https://wordpress.org/plugins/zen-site-security/
 - **Requires:** WordPress 6.5+ · PHP 8.0+
 - **Licence:** GPL-2.0-or-later
-- **Current version:** 1.13.1
+- **Current version:** 1.14.0
 
 ---
 
@@ -173,6 +173,16 @@ Version 1.x targets single-site installs. Multisite support is planned.
 ---
 
 ## Changelog
+
+### 1.14.0
+New: **Allow location on this site** under Browser APIs. The `Permissions-Policy` header denies
+geolocation with an empty allowlist, and per the specification an empty list disables a feature "in
+top-level and nested browsing contexts" — your own pages included, not just third-party frames. A
+site with a store locator or a "find nearest" control found it dead: the browser refused with no
+prompt at all, while its own site settings still showed location as allowed. Switching this on sends
+`geolocation=(self)`, which keeps every cross-origin frame and injected script blocked and opens the
+feature to your pages alone. Off by default; with it off the header is byte-for-byte unchanged, and
+camera, microphone and payment stay denied either way.
 
 ### 1.13.1
 Fix: enabling Strict CSP in Report-Only mode no longer removes the enforcing
