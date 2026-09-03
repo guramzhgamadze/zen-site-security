@@ -10,7 +10,7 @@ it expires, and hardening the platform behind it is the work this plugin does.
 - **WordPress.org:** https://wordpress.org/plugins/zen-site-security/
 - **Requires:** WordPress 6.5+ · PHP 8.0+
 - **Licence:** GPL-2.0-or-later
-- **Current version:** 1.14.0
+- **Current version:** 1.14.1
 
 ---
 
@@ -173,6 +173,12 @@ Version 1.x targets single-site installs. Multisite support is planned.
 ---
 
 ## Changelog
+
+### 1.14.1
+Fix: **Allow location on this site** did nothing on sites that also write their security headers to
+`.htaccess`. That block is generated while the new settings are being saved, before they are stored,
+so it read the *previous* value and wrote the old policy — and `Header always set` then replaced the
+correct runtime header with it. Save your settings once after updating to rewrite the block.
 
 ### 1.14.0
 New: **Allow location on this site** under Browser APIs. The `Permissions-Policy` header denies
