@@ -10,7 +10,7 @@ it expires, and hardening the platform behind it is the work this plugin does.
 - **WordPress.org:** https://wordpress.org/plugins/zen-site-security/
 - **Requires:** WordPress 6.5+ · PHP 8.0+
 - **Licence:** GPL-2.0-or-later
-- **Current version:** 1.15.0
+- **Current version:** 1.15.1
 
 ---
 
@@ -173,6 +173,15 @@ Version 1.x targets single-site installs. Multisite support is planned.
 ---
 
 ## Changelog
+
+### 1.15.1
+Fix: removes the leftover `.htaccess` blocks from before version 1.13.0, when this plugin was called
+"Zen HTTPS & SSL". The rename changed the names of its managed blocks but never deleted the old
+ones, so a site that had been running the plugin before the rename was left with a second, invisible
+copy of its redirect, security header and hardening rules. The server still applied them, the
+settings screen could not see or switch them off, and deactivating the plugin did not remove them.
+They are now cleaned up automatically, and on deactivation too, so nothing of the plugin's is left
+behind. Blocks belonging to other plugins are matched exactly and never touched.
 
 ### 1.15.0
 New: **Browser revalidation**, under a new Browser caching section. WordPress sends no
