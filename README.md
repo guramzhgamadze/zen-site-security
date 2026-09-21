@@ -10,7 +10,7 @@ it expires, and hardening the platform behind it is the work this plugin does.
 - **WordPress.org:** https://wordpress.org/plugins/zen-site-security/
 - **Requires:** WordPress 6.5+ · PHP 8.0+
 - **Licence:** GPL-2.0-or-later
-- **Current version:** 1.15.1
+- **Current version:** 1.15.2
 
 ---
 
@@ -173,6 +173,17 @@ Version 1.x targets single-site installs. Multisite support is planned.
 ---
 
 ## Changelog
+
+### 1.15.2
+Fix: on a site with a server-level page cache, the plugin's `.htaccess` redirect block was silently
+switching that cache off for every page except the home page. The block was written to the very top
+of the file, which put it above the cache's own rules. A cache looks up a stored copy using the
+address the visitor asked for, so a redirect rule above it rewrites the request first and the lookup
+matches nothing. The symptom was hard to read from either end: the home page still came from cache,
+being the one address needing no rewrite, while every other page was rebuilt on every visit and
+nothing reported an error. The block is now written immediately above the WordPress rules — still
+early enough for the redirect, but below the cache. Existing sites are corrected automatically on
+update.
 
 ### 1.15.1
 Fix: removes the leftover `.htaccess` blocks from before version 1.13.0, when this plugin was called
