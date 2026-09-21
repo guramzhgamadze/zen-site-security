@@ -10,7 +10,7 @@ it expires, and hardening the platform behind it is the work this plugin does.
 - **WordPress.org:** https://wordpress.org/plugins/zen-site-security/
 - **Requires:** WordPress 6.5+ · PHP 8.0+
 - **Licence:** GPL-2.0-or-later
-- **Current version:** 1.14.1
+- **Current version:** 1.15.0
 
 ---
 
@@ -173,6 +173,24 @@ Version 1.x targets single-site installs. Multisite support is planned.
 ---
 
 ## Changelog
+
+### 1.15.0
+New: **Browser revalidation**, under a new Browser caching section. WordPress sends no
+`Cache-Control` header at all on ordinary public pages, so browsers fall back to *heuristic*
+freshness — they guess how long to keep a page, and can hold an old copy indefinitely. It showed up
+worst on phones, where clearing history or opening a private window was the only way to see an
+updated site. This sends `Cache-Control: no-cache` on anonymous pages, which does not stop anything
+being stored; it asks the browser to check first, and the existing ETag answers unchanged pages with
+a cheap "not modified". Page caches are unaffected, and logged-in pages keep their stricter
+`no-store`. On a site with a page cache installed it starts switched on — switching it off sticks.
+
+Also new: three more opt-in security headers — `X-Permitted-Cross-Domain-Policies: none`,
+`Cross-Origin-Opener-Policy: same-origin-allow-popups` (the variant that keeps sign-in and payment
+popups working) and `Origin-Agent-Cluster: ?1` — plus a `Cross-Origin-Resource-Policy` setting for
+who may embed this site's images, scripts and fonts. `Cross-Origin-Embedder-Policy` is deliberately
+not offered: it exists to unlock SharedArrayBuffer and high-precision timers, which a typical
+WordPress site never uses, while its `require-corp` value blocks every cross-origin resource that
+does not explicitly opt in.
 
 ### 1.14.1
 Fix: **Allow location on this site** did nothing on sites that also write their security headers to
